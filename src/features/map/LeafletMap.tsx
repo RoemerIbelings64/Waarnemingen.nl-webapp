@@ -38,8 +38,8 @@ interface Props {
   center: { latitude: number; longitude: number } | null;
   radiusM: number;
   clusters: ClusterPoint[];
-  /** Doelcoördinaat om naartoe te vliegen (mijn locatie / gekozen plaats). */
-  flyTo: { latitude: number; longitude: number; nonce: number } | null;
+  /** Doelcoördinaat om naartoe te vliegen; `zoom` optioneel (bv. cluster openbreken). */
+  flyTo: { latitude: number; longitude: number; nonce: number; zoom?: number } | null;
   onViewportChange: (viewport: ViewportBBox) => void;
   onCenterSettled: (center: { latitude: number; longitude: number }) => void;
   onClusterClick: (point: ClusterPoint) => void;
@@ -89,14 +89,17 @@ function ViewportReporter({
 function FlyController({
   flyTo,
 }: {
-  flyTo: { latitude: number; longitude: number; nonce: number } | null;
+  flyTo: { latitude: number; longitude: number; nonce: number; zoom?: number } | null;
 }) {
   const map = useMap();
   useEffect(() => {
     if (flyTo) {
-      map.flyTo([flyTo.latitude, flyTo.longitude], INITIAL_ZOOM, {
-        duration: 0.6,
-      });
+      const zoom = Math.min(
+        MAX_ZOOM,
+        // Zonder expliciete zoom: nooit uitzoomen onder het huidige niveau.
+        flyTo.zoom ?? Math.max(INITIAL_ZOOM, map.getZoom()),
+      );
+      map.flyTo([flyTo.latitude, flyTo.longitude], zoom, { duration: 0.6 });
     }
   }, [flyTo, map]);
   return null;

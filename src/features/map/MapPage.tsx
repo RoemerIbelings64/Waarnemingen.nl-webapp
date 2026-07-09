@@ -11,7 +11,7 @@ import { useClusters, type ClusterPoint, type ViewportBBox } from './useClusters
 import { useUserLocation } from './useUserLocation';
 import { useFilterStore } from '../filters/filterStore';
 import { useMapCenterStore } from './mapCenterStore';
-import { FALLBACK_CENTER } from './mapBounds';
+import { FALLBACK_CENTER, INITIAL_ZOOM } from './mapBounds';
 import type { Observation } from '../../api/types';
 
 type LatLng = { latitude: number; longitude: number };
@@ -29,15 +29,15 @@ export function MapPage() {
   const [center, setCenter] = useState<LatLng | null>(null);
   const [viewport, setViewport] = useState<ViewportBBox | null>(null);
   const [flyTo, setFlyTo] = useState<
-    (LatLng & { nonce: number }) | null
+    (LatLng & { nonce: number; zoom?: number }) | null
   >(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const nonceRef = useRef(0);
 
-  const flyToCoord = useCallback((c: LatLng) => {
+  const flyToCoord = useCallback((c: LatLng, zoom?: number) => {
     nonceRef.current += 1;
-    setFlyTo({ ...c, nonce: nonceRef.current });
+    setFlyTo({ ...c, nonce: nonceRef.current, zoom });
     setCenter(c);
   }, []);
 
@@ -51,13 +51,16 @@ export function MapPage() {
     }
   }, [status, location, center, flyToCoord]);
 
-  // Een via het zoekscherm gekozen plaats verplaatst de kaart.
+  // Een via het zoekscherm gekozen plaats verplaatst de kaart (overzichtszoom).
   useEffect(() => {
     if (pendingCenter) {
-      flyToCoord({
-        latitude: pendingCenter.latitude,
-        longitude: pendingCenter.longitude,
-      });
+      flyToCoord(
+        {
+          latitude: pendingCenter.latitude,
+          longitude: pendingCenter.longitude,
+        },
+        INITIAL_ZOOM,
+      );
       setPendingCenter(null);
     }
   }, [pendingCenter, flyToCoord, setPendingCenter]);
@@ -73,7 +76,11 @@ export function MapPage() {
 
   const onClusterClick = useCallback(
     (point: ClusterPoint) => {
-      flyToCoord({ latitude: point.latitude, longitude: point.longitude });
+      // Vlieg naar het zoomniveau waarop dit cluster uiteenvalt.
+      flyToCoord(
+        { latitude: point.latitude, longitude: point.longitude },
+        point.expansionZoom,
+      );
     },
     [flyToCoord],
   );

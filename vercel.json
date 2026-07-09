@@ -1,10 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [
+  "routes": [
+    { "handle": "filesystem" },
     {
-      "source": "/api/waarneming/:path(.*)",
-      "destination": "https://waarneming.nl/api/v1/:path"
+      "src": "^/api/waarneming/(.*)$",
+      "dest": "https://waarneming.nl/api/v1/$1"
     },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "src": "^/(?!api/).*$", "dest": "/index.html" }
   ]
 }
