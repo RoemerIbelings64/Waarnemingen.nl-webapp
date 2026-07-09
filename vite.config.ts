@@ -56,8 +56,11 @@ export default defineConfig({
         target: 'https://waarneming.nl/api/v1',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/waarneming/, ''),
+        // Zelfde browser-User-Agent als de productie-proxy, zodat dev en Vercel
+        // identieke upstream-verzoeken sturen.
         headers: {
-          'User-Agent': 'NatuurkaartPWA/1.0 (+https://waarneming.nl)',
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
         },
       },
     },

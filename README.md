@@ -1,51 +1,45 @@
-# Natuurkaart — PWA 🌿
+# Natuurkaart — PWA
 
-Progressive Web App (React + TypeScript + Vite) van de Natuurkaart-app: bekijk
-recente natuurwaarnemingen op een interactieve kaart, in de browser en
-installeerbaar op je toestel. Zelfde functionaliteit en ontwerp als de native
-app, data van [waarneming.nl](https://waarneming.nl).
+Progressive Web App (React + TypeScript + Vite) for browsing recent Dutch nature observations on an interactive map, in the browser and installable on your device. Same functionality and design as the native app, data from [waarneming.nl](https://waarneming.nl).
 
-## Functionaliteit
+Built with Claude Fable 5.
 
-- 🗺️ Interactieve kaart (Leaflet) met geclusterde waarnemingspunten.
-- 📍 Begrensd op **Nederland** — niet buiten de landsgrenzen pannen of uitzoomen.
-- ⭕ De **zoekstraal** als cirkel op de kaart rond het middelpunt.
-- 🔍 Zoeken op soort/familie en op Nederlandse plaats (PDOK).
-- 🎛️ Filters: soortgroep, periode, zoekstraal.
-- 📋 Lijst gegroepeerd op Vandaag / Gisteren / Deze week; detailscherm met foto's.
-- 🌙 Dark mode (volgt systeem), volledig Nederlandse interface.
-- 📲 Installeerbaar (PWA): manifest + service worker, kaarttegels offline gecachet.
+## Features
 
-## Techstack
+- Interactive map (Leaflet) with clustered observation markers.
+- Constrained to **the Netherlands** — cannot pan or zoom outside its borders.
+- The **search radius** shown as a circle on the map around the current center.
+- Search by species/family and by Dutch place name (PDOK).
+- Filters: species group, period, search radius.
+- List grouped by Today / Yesterday / This week; detail screen with photos.
+- Dark mode (follows system), fully Dutch interface.
+- Installable (PWA): manifest + service worker, map tiles cached offline.
 
-| Onderdeel | Keuze |
+## Tech Stack
+
+| Component | Choice |
 |---|---|
 | Build | Vite + React 19 + TypeScript |
-| Kaart | Leaflet + react-leaflet, CARTO-basemaps (geen API-key) |
+| Map | Leaflet + react-leaflet, CARTO basemaps (no API key) |
 | Clustering | supercluster |
-| Server-state | TanStack Query |
-| UI-state | Zustand |
+| Server state | TanStack Query |
+| UI state | Zustand |
 | Routing | react-router-dom |
 | PWA | vite-plugin-pwa (Workbox) |
 | Geocoding | PDOK Locatieserver |
 
-De API-, i18n-, thema- en util-logica is gedeeld met de native app (identieke
-bronbestanden), zodat beide apps zich exact hetzelfde gedragen.
+The API, i18n, theme, and utility logic is shared with the native app (identical source files), so both apps behave exactly the same.
 
-## De API-proxy (belangrijk)
+## The API Proxy (important)
 
-De browser kan waarneming.nl **niet** direct aanroepen: die API stuurt geen
-CORS-headers. Daarom lopen alle verzoeken via een same-origin pad
-`/api/waarneming/...`:
+The browser cannot call waarneming.nl directly: the API does not send CORS headers. All requests therefore go through a same-origin path `/api/waarneming/...`:
 
-- **Lokaal (dev)**: de Vite dev-proxy (`vite.config.ts`) stuurt door naar
-  waarneming.nl (server-side, dus geen CORS-probleem).
-- **Productie (Vercel)**: de serverless-functie `api/waarneming/[...path].ts`
-  doet hetzelfde en zet server-side de juiste headers.
+- **Local (dev)**: the Vite dev proxy (`vite.config.ts`) forwards to waarneming.nl server-side, so no CORS issue.
+- **Production (Vercel)**: the serverless function `api/waarneming/[...path].ts` does the same and sets the correct headers server-side.
 
-PDOK staat CORS wél toe en wordt direct aangeroepen.
+PDOK does allow CORS and is called directly.
 
-## Lokaal draaien
+## Running Locally
 
 ```bash
 npm install
@@ -58,38 +52,36 @@ npm run dev          # http://localhost:5173
 npm run typecheck    # tsc -b
 npm run lint         # eslint
 npm test             # vitest
-npm run build        # productie-build (dist/)
-npm run preview      # bekijk de build lokaal
+npm run build        # production build (dist/)
+npm run preview      # preview the build locally
 ```
 
-## Deployen op Vercel
+## Deploying to Vercel
 
-Deze map (`web/`) is de Vercel-root.
+This folder (`web/`) is the Vercel root.
 
-1. Importeer de repo in Vercel en zet **Root Directory** op `web`.
-2. Framework preset: **Vite** (autodetectie). Build command `npm run build`,
-   output `dist`.
-3. De map `api/` wordt automatisch als serverless-functie gedeployed; de
-   frontend praat met `/api/waarneming/...` — geen extra config nodig.
-4. `vercel.json` regelt de SPA-fallback (alle niet-`/api`-routes → `index.html`).
+1. Import the repo in Vercel and set **Root Directory** to `web`.
+2. Framework preset: **Vite** (auto-detected). Build command `npm run build`, output `dist`.
+3. The `api/` folder is automatically deployed as a serverless function; the frontend communicates via `/api/waarneming/...` — no extra configuration needed.
+4. `vercel.json` handles the SPA fallback (all non-`/api` routes → `index.html`).
 
-Geen omgevingsvariabelen of API-keys nodig.
+No environment variables or API keys required.
 
-## Structuur
+## Structure
 
 ```
-api/waarneming/[...path].ts   # Vercel serverless-proxy naar waarneming.nl
+api/waarneming/[...path].ts   # Vercel serverless proxy to waarneming.nl
 src/
-  api/          # fetch-client (via proxy), endpoints, types  (gedeeld met native)
+  api/          # fetch client (via proxy), endpoints, types (shared with native)
   features/
-    map/        # Leaflet-kaart, grenzen, cirkel, clustering, data-hooks
-    filters/    # soortgroep-chips, filterpaneel, filter-store
-    search/     # zoekoverlay
-    detail/     # detailscherm + waarnemingsrij
-  components/   # generieke UI (lege/laad-/foutweergaven)
-  theme/        # kleuren + dark-mode-hook
-  i18n/nl.ts    # Nederlandse teksten
-  utils/        # geo, datums, filters
-  index.css     # thema (CSS-variabelen, light/dark)
-  app.css       # componentstyling
+    map/        # Leaflet map, borders, circle, clustering, data hooks
+    filters/    # species group chips, filter panel, filter store
+    search/     # search overlay
+    detail/     # detail screen + observation row
+  components/   # generic UI (empty/loading/error states)
+  theme/        # colors + dark mode hook
+  i18n/nl.ts    # Dutch strings
+  utils/        # geo, dates, filters
+  index.css     # theme (CSS variables, light/dark)
+  app.css       # component styling
 ```
