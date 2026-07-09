@@ -1,0 +1,81 @@
+import { useMemo } from 'react';
+import type { Observation } from '../../api/types';
+import { nl } from '../../i18n/nl';
+import { ObservationRow } from '../detail/ObservationRow';
+import { EmptyView, ErrorView } from '../../components/StateViews';
+import { dateBucket, bucketLabel, type DateBucket } from '../../utils/dates';
+import { distanceMeters } from '../../utils/geo';
+import { obsLat, obsLng } from '../../utils/observations';
+
+interface Props {
+  observations: Observation[];
+  totalCount: number;
+  center: { latitude: number; longitude: number } | null;
+  isError: boolean;
+  onRetry: () => void;
+  onSelect: (o: Observation) => void;
+}
+
+const BUCKET_ORDER: DateBucket[] = ['today', 'yesterday', 'thisWeek', 'earlier'];
+
+/** Lijstpaneel met waarnemingen, gegroepeerd per periode. */
+export function ObservationsList({
+  observations,
+  totalCount,
+  center,
+  isError,
+  onRetry,
+  onSelect,
+}: Props) {
+  const grouped = useMemo(() => {
+    const groups = new Map<DateBucket, { o: Observation; d?: number }[]>();
+    for (const o of observations) {
+      const bucket = dateBucket(o.date);
+      const d = center
+        ? distanceMeters(center.latitude, center.longitude, obsLat(o), obsLng(o))
+        : undefined;
+      const list = groups.get(bucket) ?? [];
+      list.push({ o, d });
+      groups.set(bucket, list);
+    }
+    return BUCKET_ORDER.filter((b) => groups.get(b)?.length).map((b) => ({
+      bucket: b,
+      label: bucketLabel(b),
+      rows: groups.get(b)!,
+    }));
+  }, [observations, center]);
+
+  return (
+    <div className="list-panel">
+      <div className="list-header">
+        <h2 className="list-title">{nl.list.title}</h2>
+        <span className="list-count">
+          {nl.list.countLabel(observations.length)}
+          {totalCount > observations.length ? ` van ${totalCount}` : ''}
+        </span>
+      </div>
+
+      <div className="list-scroll">
+        {isError ? (
+          <ErrorView onRetry={onRetry} />
+        ) : grouped.length === 0 ? (
+          <EmptyView title={nl.list.empty} hint={nl.list.emptyHint} />
+        ) : (
+          grouped.map((section) => (
+            <div key={section.bucket}>
+              <p className="section-label">{section.label}</p>
+              {section.rows.map(({ o, d }) => (
+                <ObservationRow
+                  key={o.id}
+                  observation={o}
+                  distanceM={d}
+                  onSelect={onSelect}
+                />
+              ))}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
