@@ -2,9 +2,12 @@ import { nl } from '../../i18n/nl';
 import { GROUP_EMOJI } from '../../theme/colors';
 import { type PeriodKey, useFilterStore } from './filterStore';
 import { useSpeciesGroups } from './useSpeciesGroups';
+import { useDragSheet } from '../../utils/useDragSheet';
 
 const PERIOD_ORDER: PeriodKey[] = ['today', 'd3', 'd7', 'd30'];
 const RADIUS_STEPS_KM = [1, 2, 5, 10];
+/** Eén snappunt; omlaag slepen voorbij de drempel sluit het paneel. */
+const SNAP_FRACTIONS = [0.8];
 
 const periodLabel: Record<PeriodKey, string> = {
   today: nl.filters.periodOptions.today,
@@ -18,7 +21,7 @@ interface Props {
   onClose: () => void;
 }
 
-/** Zijpaneel/onderpaneel met alle filters. */
+/** Onderpaneel met alle filters; omlaag slepen aan het handvat sluit het. */
 export function FilterPanel({ open, onClose }: Props) {
   const { data: groups } = useSpeciesGroups();
   const {
@@ -31,12 +34,33 @@ export function FilterPanel({ open, onClose }: Props) {
     reset,
   } = useFilterStore();
 
+  const { heightPx, dragging, handleProps } = useDragSheet({
+    snapFractions: SNAP_FRACTIONS,
+    enabled: open,
+    onDismiss: onClose,
+  });
+
   if (!open) return null;
 
   return (
     <>
       <div className="scrim" onClick={onClose} />
-      <div className="panel filter-panel" role="dialog" aria-label={nl.filters.title}>
+      <div
+        className="panel filter-panel"
+        role="dialog"
+        aria-label={nl.filters.title}
+        style={
+          heightPx != null
+            ? {
+                height: heightPx,
+                transition: dragging ? 'none' : 'height 0.25s ease',
+              }
+            : undefined
+        }
+      >
+        <div className="sheet-handle" {...handleProps} aria-hidden>
+          <span />
+        </div>
         <div className="panel-header">
           <h2 className="panel-title">{nl.filters.title}</h2>
           <button className="link-btn" onClick={reset}>

@@ -7,7 +7,7 @@ import {
   useMap,
   useMapEvents,
 } from 'react-leaflet';
-import type { Map as LeafletMapInstance } from 'leaflet';
+import L, { type Map as LeafletMapInstance } from 'leaflet';
 import { useIsDark } from '../../theme/useTheme';
 import {
   INITIAL_ZOOM,
@@ -33,11 +33,21 @@ const TILES = {
   },
 };
 
+/** Blauwe "mijn locatie"-stip (equivalent van showsUserLocation in de native app). */
+const USER_LOCATION_ICON = L.divIcon({
+  className: 'nk-marker',
+  html: '<div class="nk-userdot"><span></span></div>',
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
+});
+
 interface Props {
   initialCenter: { latitude: number; longitude: number };
   center: { latitude: number; longitude: number } | null;
   radiusM: number;
   clusters: ClusterPoint[];
+  /** GPS-positie van de gebruiker (blauwe stip), of null. */
+  userLocation: { latitude: number; longitude: number } | null;
   /** Doelcoördinaat om naartoe te vliegen; `zoom` optioneel (bv. cluster openbreken). */
   flyTo: { latitude: number; longitude: number; nonce: number; zoom?: number } | null;
   onViewportChange: (viewport: ViewportBBox) => void;
@@ -111,6 +121,7 @@ export function LeafletMap({
   center,
   radiusM,
   clusters,
+  userLocation,
   flyTo,
   onViewportChange,
   onCenterSettled,
@@ -150,6 +161,15 @@ export function LeafletMap({
             fillColor: circleColor,
             fillOpacity: isDark ? 0.12 : 0.08,
           }}
+        />
+      ) : null}
+
+      {userLocation ? (
+        <Marker
+          position={[userLocation.latitude, userLocation.longitude]}
+          icon={USER_LOCATION_ICON}
+          interactive={false}
+          zIndexOffset={500}
         />
       ) : null}
 

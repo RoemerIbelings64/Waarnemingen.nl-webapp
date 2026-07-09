@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MapContainer, Marker, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
@@ -25,6 +25,18 @@ export function DetailView() {
   const { data: info } = useSpeciesInformation(speciesId);
   const description = useMemo(() => extractDescription(info), [info]);
   const [photoIndex, setPhotoIndex] = useState(0);
+  const carouselRef = useRef<HTMLDivElement>(null);
+
+  const onCarouselScroll = () => {
+    const el = carouselRef.current;
+    if (!el || el.clientWidth === 0) return;
+    setPhotoIndex(Math.round(el.scrollLeft / el.clientWidth));
+  };
+
+  const scrollToPhoto = (index: number) => {
+    const el = carouselRef.current;
+    el?.scrollTo({ left: index * el.clientWidth, behavior: 'smooth' });
+  };
 
   const close = () => navigate('/');
 
@@ -57,18 +69,28 @@ export function DetailView() {
                 <div className="detail-hero">
                   {photos.length > 0 ? (
                     <>
-                      <img
-                        className="detail-photo"
-                        src={photos[photoIndex]}
-                        alt={species?.name ?? ''}
-                      />
+                      <div
+                        className="detail-carousel"
+                        ref={carouselRef}
+                        onScroll={onCarouselScroll}
+                      >
+                        {photos.map((url) => (
+                          <img
+                            key={url}
+                            className="detail-photo"
+                            src={url}
+                            alt={species?.name ?? ''}
+                            loading="lazy"
+                          />
+                        ))}
+                      </div>
                       {photos.length > 1 ? (
                         <div className="photo-dots">
                           {photos.map((_, i) => (
                             <button
                               key={i}
                               className={`photo-dot${i === photoIndex ? ' active' : ''}`}
-                              onClick={() => setPhotoIndex(i)}
+                              onClick={() => scrollToPhoto(i)}
                               aria-label={`Foto ${i + 1}`}
                             />
                           ))}

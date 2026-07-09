@@ -6,6 +6,11 @@ import { EmptyView, ErrorView } from '../../components/StateViews';
 import { dateBucket, bucketLabel, type DateBucket } from '../../utils/dates';
 import { distanceMeters } from '../../utils/geo';
 import { obsLat, obsLng } from '../../utils/observations';
+import { useDragSheet } from '../../utils/useDragSheet';
+import { useMediaQuery } from '../../utils/useMediaQuery';
+
+/** Snappunten als in de native app: peek / half / vrijwel volledig. */
+const SNAP_FRACTIONS = [0.14, 0.55, 0.92];
 
 interface Props {
   observations: Observation[];
@@ -45,8 +50,30 @@ export function ObservationsList({
     }));
   }, [observations, center]);
 
+  // Op mobiel is de lijst een sleepbare bottom sheet met snappunten; op breed
+  // scherm een vaste zijkolom (dan is slepen uitgeschakeld).
+  const isDesktop = useMediaQuery('(min-width: 820px)');
+  const { heightPx, dragging, handleProps } = useDragSheet({
+    snapFractions: SNAP_FRACTIONS,
+    initialIndex: 0,
+    enabled: !isDesktop,
+  });
+
   return (
-    <div className="list-panel">
+    <div
+      className="list-panel"
+      style={
+        !isDesktop && heightPx != null
+          ? {
+              height: heightPx,
+              transition: dragging ? 'none' : 'height 0.25s ease',
+            }
+          : undefined
+      }
+    >
+      <div className="sheet-handle" {...handleProps} aria-hidden>
+        <span />
+      </div>
       <div className="list-header">
         <h2 className="list-title">{nl.list.title}</h2>
         <span className="list-count">

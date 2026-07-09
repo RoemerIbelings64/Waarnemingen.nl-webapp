@@ -12,6 +12,7 @@ import { useUserLocation } from './useUserLocation';
 import { useFilterStore } from '../filters/filterStore';
 import { useMapCenterStore } from './mapCenterStore';
 import { FALLBACK_CENTER, INITIAL_ZOOM } from './mapBounds';
+import { useOverlayHistory } from '../../utils/useOverlayHistory';
 import type { Observation } from '../../api/types';
 
 type LatLng = { latitude: number; longitude: number };
@@ -34,6 +35,12 @@ export function MapPage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const nonceRef = useRef(0);
+
+  // Terugknop/Escape sluit overlays, zoals native modals dat doen.
+  const closeSearch = useCallback(() => setSearchOpen(false), []);
+  const closeFilter = useCallback(() => setFilterOpen(false), []);
+  const requestCloseSearch = useOverlayHistory('zoeken', searchOpen, closeSearch);
+  const requestCloseFilter = useOverlayHistory('filters', filterOpen, closeFilter);
 
   const flyToCoord = useCallback((c: LatLng, zoom?: number) => {
     nonceRef.current += 1;
@@ -92,6 +99,7 @@ export function MapPage() {
         center={center}
         radiusM={radiusM}
         clusters={clusters}
+        userLocation={status === 'granted' ? location : null}
         flyTo={flyTo}
         onViewportChange={setViewport}
         onCenterSettled={setCenter}
@@ -157,8 +165,8 @@ export function MapPage() {
         onSelect={openObservation}
       />
 
-      <FilterPanel open={filterOpen} onClose={() => setFilterOpen(false)} />
-      {searchOpen ? <SearchOverlay onClose={() => setSearchOpen(false)} /> : null}
+      <FilterPanel open={filterOpen} onClose={requestCloseFilter} />
+      {searchOpen ? <SearchOverlay onClose={requestCloseSearch} /> : null}
     </div>
   );
 }
