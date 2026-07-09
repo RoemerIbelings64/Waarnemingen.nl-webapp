@@ -35,7 +35,7 @@ The API, i18n, theme, and utility logic is shared with the native app (identical
 The browser cannot call waarneming.nl directly: the API does not send CORS headers. All requests therefore go through a same-origin path `/api/waarneming/...`:
 
 - **Local (dev)**: the Vite dev proxy (`vite.config.ts`) forwards to waarneming.nl server-side, so no CORS issue.
-- **Production (Vercel)**: the serverless function `api/waarneming/[...path].ts` does the same and sets the correct headers server-side.
+- **Production (Vercel)**: a rewrite in `vercel.json` proxies `/api/waarneming/:path(.*)` to `https://waarneming.nl/api/v1/:path` server-side. The `(.*)` capture preserves the trailing slash that every v1 endpoint requires (without it the API 301-redirects cross-origin, which the browser then blocks). No serverless function is involved — Vercel's edge does the proxying.
 
 PDOK does allow CORS and is called directly.
 
@@ -62,15 +62,14 @@ This folder (`web/`) is the Vercel root.
 
 1. Import the repo in Vercel and set **Root Directory** to `web`.
 2. Framework preset: **Vite** (auto-detected). Build command `npm run build`, output `dist`.
-3. The `api/` folder is automatically deployed as a serverless function; the frontend communicates via `/api/waarneming/...` — no extra configuration needed.
-4. `vercel.json` handles the SPA fallback (all non-`/api` routes → `index.html`).
+3. `vercel.json` does two things: it proxies `/api/waarneming/...` to waarneming.nl (see above) and provides the SPA fallback (all non-`/api` routes → `index.html`). No serverless functions, no extra configuration.
 
 No environment variables or API keys required.
 
 ## Structure
 
 ```
-api/waarneming/[...path].ts   # Vercel serverless proxy to waarneming.nl
+vercel.json                   # /api/waarneming/* → waarneming.nl proxy + SPA fallback
 src/
   api/          # fetch client (via proxy), endpoints, types (shared with native)
   features/
