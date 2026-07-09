@@ -32,7 +32,10 @@ export function SearchOverlay({ onClose }: Props) {
       (s) => s.name === picked.name || s.group === picked.group,
     );
     const ids = new Set<number>([picked.id, ...related.map((s) => s.id)]);
-    setSpeciesFilter({ label: picked.name, speciesIds: [...ids] });
+    // Bij een brede zoekterm ("uil") filteren we op alle gevonden soorten in
+    // de groep; het label toont dan de zoekterm en niet één soortnaam.
+    const label = ids.size > 1 ? debounced.trim() : picked.name;
+    setSpeciesFilter({ label, speciesIds: [...ids] });
     onClose();
   };
 
