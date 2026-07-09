@@ -35,7 +35,7 @@ The API, i18n, theme, and utility logic is shared with the native app (identical
 The browser cannot call waarneming.nl directly: the API does not send CORS headers. All requests therefore go through a same-origin path `/api/waarneming/...`:
 
 - **Local (dev)**: the Vite dev proxy (`vite.config.ts`) forwards to waarneming.nl server-side, so no CORS issue.
-- **Production (Vercel)**: `vercel.json` uses the low-level `routes` syntax with a **verbatim regex** — `^/api/waarneming/(.*)$` → `https://waarneming.nl/api/v1/$1`. This matters: the higher-level `rewrites` syntax compiles its `source` with path-to-regexp, and Vercel's production router treats a `:path(.*)` parameter as a *single* path segment — multi-segment API paths (`observations/around-point/`) then 404. The verbatim regex skips that compilation entirely and also preserves the trailing slash that every v1 endpoint requires. No serverless function is involved — Vercel's edge does the proxying.
+- **Production (Vercel)**: `vercel.json` defines **one explicit rewrite per API endpoint** (literal segments plus single-segment `:id` params) to `https://waarneming.nl/api/v1/...`. Deliberately no catch-all: Vercel's production router treats a `:path(.*)` parameter as a *single* path segment, so multi-segment API paths (`observations/around-point/`) 404 through a catch-all rewrite; and the legacy `routes` syntax (verbatim regex) fails this project's build. Literal per-endpoint rewrites use only core, proven routing features. Adding a new API endpoint to the app means adding one rewrite line. No serverless function is involved — Vercel's edge does the proxying and follows the upstream's redirects server-side.
 
 PDOK does allow CORS and is called directly.
 
@@ -62,7 +62,7 @@ This folder (`web/`) is the Vercel root.
 
 1. Import the repo in Vercel and set **Root Directory** to `web`.
 2. Framework preset: **Vite** (auto-detected). Build command `npm run build`, output `dist`.
-3. `vercel.json` (low-level `routes`) does three things in order: serve build output from the filesystem, proxy `/api/waarneming/...` to waarneming.nl (see above), and provide the SPA fallback (all non-`/api` routes → `index.html`). No serverless functions, no extra configuration.
+3. `vercel.json` does two things: proxy the `/api/waarneming/...` endpoints to waarneming.nl (one rewrite per endpoint, see above) and provide the SPA fallback (all non-`/api` routes → `index.html`). No serverless functions, no extra configuration.
 
 No environment variables or API keys required.
 

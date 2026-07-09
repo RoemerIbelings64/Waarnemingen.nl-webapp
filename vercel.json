@@ -1,11 +1,30 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "routes": [
-    { "handle": "filesystem" },
+  "rewrites": [
     {
-      "src": "^/api/waarneming/(.*)$",
-      "dest": "https://waarneming.nl/api/v1/$1"
+      "source": "/api/waarneming/species-groups/",
+      "destination": "https://waarneming.nl/api/v1/species-groups/"
     },
-    { "src": "^/(?!api/).*$", "dest": "/index.html" }
+    {
+      "source": "/api/waarneming/species/search/",
+      "destination": "https://waarneming.nl/api/v1/species/search/"
+    },
+    {
+      "source": "/api/waarneming/species/:id/information/",
+      "destination": "https://waarneming.nl/api/v1/species/:id/information/"
+    },
+    {
+      "source": "/api/waarneming/species/:id/observations/",
+      "destination": "https://waarneming.nl/api/v1/species/:id/observations/"
+    },
+    {
+      "source": "/api/waarneming/observations/around-point/",
+      "destination": "https://waarneming.nl/api/v1/observations/around-point/"
+    },
+    {
+      "source": "/api/waarneming/observations/:id/",
+      "destination": "https://waarneming.nl/api/v1/observations/:id/"
+    },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
